@@ -64,6 +64,12 @@ class TopologyController(ControllerBase):
         super(TopologyController, self).__init__(req, link, data, **config)
         self.topology_api_app = data['topology_api_app']
 
+    @route('topology', '/topology',
+           methods=['GET'])
+    def list_topo(self, req, **kwargs):
+        data = self._links(req, **kwargs)
+        return self._topology(data, **kwargs)
+
     @route('topology', '/v1.0/topology/switches',
            methods=['GET'])
     def list_switches(self, req, **kwargs):
@@ -117,3 +123,7 @@ class TopologyController(ControllerBase):
         hosts = get_host(self.topology_api_app, dpid)
         body = json.dumps([host.to_dict() for host in hosts])
         return Response(content_type='application/json', body=body)
+
+    def _topology(self, data, **kwargs):
+        print data
+        return data
