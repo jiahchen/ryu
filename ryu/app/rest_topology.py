@@ -67,8 +67,7 @@ class TopologyController(ControllerBase):
     @route('topology', '/topology',
            methods=['GET'])
     def list_topo(self, req, **kwargs):
-        data = self._links(req, **kwargs)
-        return self._topology(data, **kwargs)
+        return self._topology(req, **kwargs)
 
     @route('topology', '/v1.0/topology/switches',
            methods=['GET'])
@@ -124,6 +123,42 @@ class TopologyController(ControllerBase):
         body = json.dumps([host.to_dict() for host in hosts])
         return Response(content_type='application/json', body=body)
 
-    def _topology(self, data, **kwargs):
-        print data
-        return data
+    def _topology(self, req, **kwargs):
+        topology = {}
+        topology['links'] = []
+        dpid = None
+
+        links = get_link(self.topology_api_app, dpid)
+        parselinks = [link.to_dict() for link in links]        
+
+        for obj in parselinks:
+            linkobj = {}
+            linkobj['src'] = {}
+            linkobj['dest'] = {}
+            linkobj['src']['dpid'] = int(obj['src']['dpid'], 16)
+            linkobj['src']['port'] = int(obj['src']['port_no'], 16)
+            linkobj['dest']['dpid'] = int(obj['dst']['dpid'], 16)
+            linkobj['dest']['port'] = int(obj['dst']['port_no'], 16)
+            topology['links'].append(linkobj)
+        
+        topology['links'].sort(key=lambda l: (l['src']['dpid'], l['src']['port'])) 
+
+        for linkobj in topology['links']:
+            linkobj['src']['dpid'] = str(hex(linkobj['src']['dpid']).rstrip("L").lstrip("0x") or "0") 
+            linkobj['src']['port'] = str(hex(linkobj['src']['port']).rstrip("L").lstrip("0x") or "0") 
+            linkobj['dest']['dpid'] = str(hex(linkobj['dest']['dpid']).rstrip("L").lstrip("0x") or "0") 
+            linkobj['dest']['port'] = str(hex(linkobj['dest']['port']).rstrip("L").lstrip("0x") or "0")
+        
+        body = json.dumps(topology)
+        print body
+        return Response(content_type='application/json', body=body)
+
+
+
+
+
+
+
+
+
+
